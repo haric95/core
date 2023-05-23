@@ -5,7 +5,7 @@ export default function Home() {
     <main className="w-full">
       <div className="w-full mb-16">
         <h3 className="mb-4">Identity</h3>
-        <div className="w-[75%] text-justify">
+        <div className="w-full md:w-[75%] text-justify">
           <p>
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas
             accumsan consectetur lectus, a efficitur elit convallis ac. Donec
@@ -32,7 +32,7 @@ export default function Home() {
       </div>
       <div className="w-full flex flex-col items-end ">
         <h3 className="mb-4">Collaboration</h3>
-        <div className="flex justify-end text-justify w-[75%]">
+        <div className="flex justify-end text-justify w-full md:w-[75%]">
           <p>
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas
             accumsan consectetur lectus, a efficitur elit convallis ac. Donec

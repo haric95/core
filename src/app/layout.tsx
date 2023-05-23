@@ -33,7 +33,7 @@ export default function RootLayout({
         <div className="absolute w-full h-full">
           <div style={{ minHeight: "calc(100vh - 60px)" }}>
             <Navigation />
-            <div className="px-32">{children}</div>
+            <div className="px-8 md:px-32">{children}</div>
           </div>
           <Footer />
         </div>

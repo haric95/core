@@ -1,9 +1,20 @@
+"use client";
+
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { manrope } from "@/app/layout";
+import { usePathname } from "next/navigation";
+
+const PATHS = [
+  { label: "Arts", path: "/arts" },
+  { label: "Food", path: "/food" },
+  { label: "Fashion", path: "/fashion" },
+  { label: "Social", path: "/social" },
+];
 
 export const Navigation: React.FC = () => {
+  const pathname = usePathname();
+
   return (
     <div className={`w-full p-8`}>
       <div className="w-full flex justify-center">
@@ -22,18 +33,17 @@ export const Navigation: React.FC = () => {
       </div> */}
       <div className={`w-full flex justify-center opacity-80`}>
         <div className="flex justify-between">
-          <Link href="/arts" className="hover-underline-animation mr-4">
-            <p>Arts</p>
-          </Link>
-          <Link href="/food" className="hover-underline-animation mr-4">
-            <p>Food</p>
-          </Link>
-          <Link href="/fashion" className="hover-underline-animation mr-4">
-            <p>Fashion</p>
-          </Link>
-          <Link href="/social" className="hover-underline-animation">
-            <p>Social</p>
-          </Link>
+          {PATHS.map((path, index) => (
+            <Link
+              href={path.path}
+              className={`hover-underline-animation ${
+                index !== PATHS.length - 1 ? "mr-4" : ""
+              } ${pathname === path.path ? "font-bold" : ""}`}
+              key={path.label}
+            >
+              <p>{path.label}</p>
+            </Link>
+          ))}
         </div>
       </div>
     </div>
