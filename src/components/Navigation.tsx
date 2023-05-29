@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { GlobalContext } from "@/state/globalContext";
 
 const PATHS = [
   { label: "Arts", path: "/arts" },
@@ -12,25 +13,48 @@ const PATHS = [
   { label: "Social", path: "/social" },
 ];
 
+const MAX_LOGO_SIZE = 512;
+const MIN_LOGO_SIZE = 256;
+
 export const Navigation: React.FC = () => {
   const pathname = usePathname();
+
+  const { isMobile, scrollPosition } = useContext(GlobalContext);
+  const [logoSize, setLogoSize] = useState(
+    pathname === "/" ? MAX_LOGO_SIZE : MIN_LOGO_SIZE
+  );
+
+  const handleScroll = useCallback(() => {
+    setLogoSize(
+      Math.min(
+        logoSize,
+        Math.round(Math.max(MIN_LOGO_SIZE, MAX_LOGO_SIZE - scrollPosition))
+      )
+    );
+  }, [logoSize, scrollPosition]);
+
+  useEffect(() => {
+    handleScroll();
+    window.addEventListener("scroll", handleScroll);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [handleScroll]);
 
   return (
     <div className={`w-full p-8`}>
       <div className="w-full flex justify-center">
         <Link href="/">
           <Image
-            src="/logo-transparent-m.png"
+            src="/logo-transparent.png"
             alt="logo"
-            width="128"
-            height="128"
+            width={logoSize}
+            height={logoSize}
             className="mb-4"
           />
         </Link>
       </div>
-      {/* <div className="w-full flex justify-center mb-4 opacity-80">
-        <p>Humanitarian Project</p>
-      </div> */}
       <div className={`w-full flex justify-center opacity-80`}>
         <div className="flex justify-between">
           {PATHS.map((path, index) => (

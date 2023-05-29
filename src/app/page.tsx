@@ -1,3 +1,4 @@
+import { Calendar } from "@/components/Calendar";
 import Image from "next/image";
 
 export default function Home() {
@@ -30,7 +31,7 @@ export default function Home() {
           </p>
         </div>
       </div>
-      <div className="w-full flex flex-col items-end ">
+      <div className="w-full flex flex-col items-end mb-16">
         <h3 className="mb-4">Collaboration</h3>
         <div className="flex justify-end text-justify w-full md:w-[75%]">
           <p>
@@ -46,6 +47,10 @@ export default function Home() {
           </p>
           <br />
         </div>
+      </div>
+      <div className="w-full">
+        <h3 className="mb-4">Events</h3>
+        <Calendar />
       </div>
     </main>
   );
