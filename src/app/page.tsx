@@ -49,7 +49,7 @@ export default function Home() {
         </div>
       </div>
       <div className="w-full">
-        <h3 className="mb-4">Events</h3>
+        <h3 className="md-0 md:mb-4">Events</h3>
         <Calendar />
       </div>
     </main>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 type Event = {
   id: string;
@@ -143,18 +143,30 @@ export const Calendar: React.FC<CalendarProps> = ({ tagFilter }) => {
     return months;
   };
 
+  const eventContainerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (eventContainerRef.current) {
+      eventContainerRef.current.scrollTo({ top: 0 });
+    }
+  }, [selectedTimeRange]);
+
   return (
-    <div className="flex flex-col md:flex-row justify-between h-64">
-      <div className="w-full md:w-1/4 flex md:flex-col items-left md:border-r-2 border-black overflow-y-auto">
+    <div className="flex flex-col md:flex-row justify-between md:h-64">
+      <div className="w-full h-32 md:h-auto md:w-1/4 flex md:flex-col items-center md:items-left md:border-r-2 border-black overflow-y-auto">
         {generateMonthsArray(currentMonth).map((_, index) => {
           const month = (index + currentMonth) % 12;
           const year = currentYear + Math.floor((currentMonth + index) / 12);
           return (
             <>
-              {(index === 0 || month === 0) && <h4>{year}</h4>}
+              {(index === 0 || month === 0) && (
+                <h4 className="text-left w-full pr-4 mr-4 border-r-2 border-black md:border-0 md:mr-0 md:pr-0">
+                  <b>{year}</b>
+                </h4>
+              )}
               <button
                 key={index}
-                className="h-12"
+                className="h-12 md:mr-0 mr-4"
                 onClick={() => {
                   setSelectedTimeRange({
                     start: monthAndYearToDate(month, year),
@@ -167,7 +179,7 @@ export const Calendar: React.FC<CalendarProps> = ({ tagFilter }) => {
                     monthAndYearToDate(month, year) == selectedTimeRange.start
                       ? "font-bold"
                       : ""
-                  } ${month === 11 ? "mb-8" : ""}`}
+                  } ${month === 11 ? "mr-8 md:mr-0 md:mb-8" : ""}`}
                 >
                   {MONTHS[(index + currentMonth) % 12]}
                 </h4>
@@ -176,7 +188,10 @@ export const Calendar: React.FC<CalendarProps> = ({ tagFilter }) => {
           );
         })}
       </div>
-      <div className="w-full md:w-[60%] text-right overflow-x-auto">
+      <div
+        className="w-full md:w-[60%] text-right overflow-x-auto md:mt-0"
+        ref={eventContainerRef}
+      >
         {filteredEvents.map((event, index) => (
           <div
             className={`${index !== filteredEvents.length - 1 ? "mb-8" : ""}`}
