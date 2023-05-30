@@ -47,7 +47,7 @@ export const Calendar: React.FC<CalendarProps> = ({ tagFilter }) => {
   const [selectedTimeRange, setSelectedTimeRange] = useState<{
     start: number;
     end: number;
-  }>(() => {
+  } | null>(() => {
     const d = new Date().getTime();
     return { start: d, end: getStartOfNextMonth(d) };
   });
@@ -78,12 +78,12 @@ export const Calendar: React.FC<CalendarProps> = ({ tagFilter }) => {
         })
         // filter to date range
         .filter((event) => {
-          return (
-            new Date(event.attributes.StartDate).getTime() >
-              selectedTimeRange.start &&
-            new Date(event.attributes.StartDate).getTime() <
-              selectedTimeRange.end
-          );
+          return selectedTimeRange
+            ? new Date(event.attributes.StartDate).getTime() >
+                selectedTimeRange.start &&
+                new Date(event.attributes.StartDate).getTime() <
+                  selectedTimeRange.end
+            : true;
         })
         // of the current tag
         ?.filter((event) =>
@@ -139,7 +139,14 @@ export const Calendar: React.FC<CalendarProps> = ({ tagFilter }) => {
               >
                 <h4
                   className={`${
-                    monthAndYearToDate(month, year) == selectedTimeRange.start
+                    selectedTimeRange &&
+                    selectedTimeRange.start >=
+                      monthAndYearToDate(month, year) &&
+                    selectedTimeRange.start <
+                      monthAndYearToDate(
+                        (month + 1) % 12,
+                        month === 11 ? year + 1 : year
+                      )
                       ? "font-bold"
                       : ""
                   } ${month === 11 ? "mr-8 md:mr-0 md:mb-8" : ""}`}
@@ -158,40 +165,62 @@ export const Calendar: React.FC<CalendarProps> = ({ tagFilter }) => {
         {filteredEvents ? (
           filteredEvents.length > 0 ? (
             filteredEvents.map((event, index) => (
-              <div
-                className={`${
-                  index !== filteredEvents.length - 1 ? "mb-8" : ""
-                }`}
-                key={event.id}
-              >
-                <p>
-                  <b>{EVENT_TAG_MAP[event.attributes.Tag]}</b>
-                </p>
-                <h4 className="mb-2">{event.attributes.Name}</h4>
-                <p>
-                  <b>{new Date(event.attributes.StartDate).toDateString()} </b>
-                </p>
-                <p className="mb-2">
-                  {" "}
-                  {new Date(event.attributes.StartDate).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                  -
-                  {new Date(event.attributes.EndDate).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}{" "}
-                </p>
-                <p>{event.attributes.Description}</p>
-              </div>
+              <>
+                {(index === 0 ||
+                  new Date(event.attributes.StartDate).getMonth() !==
+                    new Date(
+                      filteredEvents[
+                        Math.max(index - 1, 0)
+                      ].attributes.StartDate
+                    ).getMonth()) && (
+                  <>
+                    <h3 className="border-b-[1px] border-black pb-2 mb-2">
+                      {MONTHS[new Date(event.attributes.StartDate).getMonth()]}
+                    </h3>
+                  </>
+                )}
+                <div
+                  className={`${
+                    index !== filteredEvents.length - 1 ? "mb-8" : ""
+                  }`}
+                  key={event.id}
+                >
+                  <p>
+                    <b>{EVENT_TAG_MAP[event.attributes.Tag]}</b>
+                  </p>
+                  <h4 className="mb-2">{event.attributes.Name}</h4>
+                  <p>
+                    <b>
+                      {new Date(event.attributes.StartDate).toDateString()}{" "}
+                    </b>
+                  </p>
+                  <p className="mb-2">
+                    {" "}
+                    {new Date(event.attributes.StartDate).toLocaleTimeString(
+                      [],
+                      {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }
+                    )}
+                    -
+                    {new Date(event.attributes.EndDate).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}{" "}
+                  </p>
+                  <p>{event.attributes.Description}</p>
+                </div>
+              </>
             ))
           ) : (
-            <p>
-              No upcoming events in{" "}
-              {MONTHS[new Date(selectedTimeRange.start).getMonth()]}{" "}
-              {new Date(selectedTimeRange.start).getFullYear()}
-            </p>
+            selectedTimeRange && (
+              <p>
+                No upcoming events in{" "}
+                {MONTHS[new Date(selectedTimeRange.start).getMonth()]}{" "}
+                {new Date(selectedTimeRange.start).getFullYear()}
+              </p>
+            )
           )
         ) : (
           <p>Loading</p>
