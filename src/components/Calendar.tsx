@@ -1,79 +1,15 @@
 "use client";
 
+import { MONTHS } from "@/constants";
+import { fetchAPI } from "@/lib/api";
+import { CalendarEvent, StrapiObject } from "@/types";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
-type Event = {
-  id: string;
-  title: string;
-  description: string;
-  start: string; // ISO 8601
-  end: string; // ISO 8601
-  tag: "art" | "fashion" | "social" | "food";
-};
-
-const EVENT_TAG_MAP: Record<Event["tag"], string> = {
+const EVENT_TAG_MAP: Record<CalendarEvent["Tag"], string> = {
   art: "Art",
   fashion: "Fashion",
   social: "Social",
   food: "Food",
-};
-
-const events: Event[] = [
-  {
-    id: "dsadbb",
-    title: "Human Ecology Workshop - 1",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenasaccumsan consectetur lectus, a efficitur elit convallis ac. Donec vel lectus libero.",
-    tag: "social",
-    start: "2023-05-29T14:00:00.000Z",
-    end: "2023-05-29T16:00:00.000Z",
-  },
-  {
-    id: "dsadbba",
-    title: "Human Ecology Workshop - 2",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenasaccumsan consectetur lectus, a efficitur elit convallis ac. Donec vel lectus libero.",
-    tag: "social",
-    start: "2023-05-30T14:00:00.000Z",
-    end: "2023-05-30T16:00:00.000Z",
-  },
-  {
-    id: "dsadabab",
-    title: "Human Ecology Workshop - 3",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenasaccumsan consectetur lectus, a efficitur elit convallis ac. Donec vel lectus libero.",
-    tag: "social",
-    start: "2023-05-31T14:00:00.000Z",
-    end: "2023-05-31T16:00:00.000Z",
-  },
-  {
-    id: "dsadbab",
-    title: "Crafting Workshop - 1",
-    description:
-      "consectetur adipiscing elit. Maecenasaccumsan consectetur lectus, a efficitur elit convallis ac. Donec vel lectus libero.",
-    tag: "social",
-    start: "2023-06-29T14:00:00.000Z",
-    end: "2023-06-29T16:00:00.000Z",
-  },
-];
-
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
-type CalendarProps = {
-  tagFilter?: Event["tag"];
 };
 
 const monthAndYearToDate = (month: number, year: number) => {
@@ -93,13 +29,17 @@ const getStartOfNextMonth = (date: number) => {
   return startOfThisMonth.getTime();
 };
 
+type CalendarProps = {
+  tagFilter?: CalendarEvent["Tag"];
+};
+
 export const Calendar: React.FC<CalendarProps> = ({ tagFilter }) => {
   const [currentMonth, setCurrentMonth] = useState(() => {
     const date = new Date();
     return date.getMonth();
   });
 
-  const [currentYear, _] = useState(() => {
+  const [currentYear, setCurrentYear] = useState(() => {
     const date = new Date();
     return date.getFullYear();
   });
@@ -112,28 +52,51 @@ export const Calendar: React.FC<CalendarProps> = ({ tagFilter }) => {
     return { start: d, end: getStartOfNextMonth(d) };
   });
 
+  const [calendarEvents, setCalendarEvents] = useState<
+    StrapiObject<CalendarEvent>[] | null
+  >(null);
+
+  const fetchData = async () => {
+    const [calendarEvents] = await Promise.all([
+      fetchAPI<StrapiObject<CalendarEvent>[]>("/events", { populate: "*" }),
+    ]);
+    setCalendarEvents(calendarEvents.data);
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   const filteredEvents = useMemo(() => {
     return (
-      events
-        .filter((event) => {
-          return new Date(event.end).getTime() > new Date().getTime();
+      // remove past events
+      calendarEvents
+        ?.filter((event) => {
+          return (
+            new Date(event.attributes.EndDate).getTime() > new Date().getTime()
+          );
         })
         // filter to date range
         .filter((event) => {
           return (
-            new Date(event.start).getTime() > selectedTimeRange.start &&
-            new Date(event.start).getTime() < selectedTimeRange.end
+            new Date(event.attributes.StartDate).getTime() >
+              selectedTimeRange.start &&
+            new Date(event.attributes.StartDate).getTime() <
+              selectedTimeRange.end
           );
         })
         // of the current tag
-        .filter((event) => (tagFilter ? event.tag === tagFilter : true))
+        ?.filter((event) =>
+          tagFilter ? event.attributes.Tag === tagFilter : true
+        )
         // sort by date
         .sort(
           (eventA, eventB) =>
-            new Date(eventA.start).getTime() - new Date(eventB.start).getTime()
+            new Date(eventA.attributes.StartDate).getTime() -
+            new Date(eventB.attributes.StartDate).getTime()
         )
     );
-  }, [tagFilter, selectedTimeRange]);
+  }, [tagFilter, selectedTimeRange, calendarEvents]);
 
   const generateMonthsArray = (startMonth: number) => {
     const months = [];
@@ -192,33 +155,47 @@ export const Calendar: React.FC<CalendarProps> = ({ tagFilter }) => {
         className="w-full md:w-[60%] text-right overflow-x-auto md:mt-0"
         ref={eventContainerRef}
       >
-        {filteredEvents.map((event, index) => (
-          <div
-            className={`${index !== filteredEvents.length - 1 ? "mb-8" : ""}`}
-            key={event.id}
-          >
+        {filteredEvents ? (
+          filteredEvents.length > 0 ? (
+            filteredEvents.map((event, index) => (
+              <div
+                className={`${
+                  index !== filteredEvents.length - 1 ? "mb-8" : ""
+                }`}
+                key={event.id}
+              >
+                <p>
+                  <b>{EVENT_TAG_MAP[event.attributes.Tag]}</b>
+                </p>
+                <h4 className="mb-2">{event.attributes.Name}</h4>
+                <p>
+                  <b>{new Date(event.attributes.StartDate).toDateString()} </b>
+                </p>
+                <p className="mb-2">
+                  {" "}
+                  {new Date(event.attributes.StartDate).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                  -
+                  {new Date(event.attributes.EndDate).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}{" "}
+                </p>
+                <p>{event.attributes.Description}</p>
+              </div>
+            ))
+          ) : (
             <p>
-              <b>{EVENT_TAG_MAP[event.tag]}</b>
+              No upcoming events in{" "}
+              {MONTHS[new Date(selectedTimeRange.start).getMonth()]}{" "}
+              {new Date(selectedTimeRange.start).getFullYear()}
             </p>
-            <h4 className="mb-2">{event.title}</h4>
-            <p>
-              <b>{new Date(event.start).toDateString()} </b>
-            </p>
-            <p className="mb-2">
-              {" "}
-              {new Date(event.start).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-              -
-              {new Date(event.end).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}{" "}
-            </p>
-            <p>{event.description}</p>
-          </div>
-        ))}
+          )
+        ) : (
+          <p>Loading</p>
+        )}
       </div>
     </div>
   );
